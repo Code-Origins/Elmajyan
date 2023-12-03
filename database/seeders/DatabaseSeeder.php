@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,11 +17,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        Role::updateOrCreate(['name' => 'customer'], ['name' => 'customer']);
+        Role::updateOrCreate(['name' => 'admin'], ['name' => 'admin']);
+        Role::updateOrCreate(['name' => 'Super Admin'], ['name' => 'Super Admin']);
+
+        // create permissions
+        $permissions = [
+            'Manage Products',
+            'Manage Pages',
+            'Manage Categories',
+            'Manage Users',
+            'Manage Menus',
+            'Manage Settings',
+            'Manage Orders',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::updateOrCreate(['name' => $permission], ['name' => $permission]);
+        }
+
+         $admin = \App\Models\User::updateOrCreate(['email' => 'admin@gmail.com'], [
+             'name' => 'Admin',
+             'email' => 'admin@gmail.com',
+             'status' => 'active',
+             'password' => Hash::make(env('ADMIN_PASSWORD', 'admin'))
+         ]);
+
+        $admin->assignRole('Super Admin');
+        $admin->assignRole('admin');
     }
 }
